@@ -11,9 +11,10 @@ module.exports = function(email, password) {
   let credentials = {
     'user[email]': email,
     'user[password]': password,
+    'user[remember_me]': 'true'
   }
 
-  return {setUrl}
+  return {setUrl, getCookies}
 
   function setUrl(custom_url) {
     return signIn()
@@ -30,11 +31,23 @@ module.exports = function(email, password) {
       })
   }
 
+  function getCookies() {
+    return request('/sign_in').then(() => {
+      return request('/sign_in', credentials).then(response => {
+        return Promise.resolve(response.headers['set-cookie'])
+        if (response.statusCode !== 302) {
+          throw new Error('Invalid email/password')
+        }
+      })
+    })
+  }
+
   function signIn() {
     if (headers.cookie) return Promise.resolve()
 
     return request('/sign_in').then(() => {
       return request('/sign_in', credentials).then(response => {
+        // return Promise.resolve(response.headers['set-cookie'])
         if (response.statusCode !== 302) {
           throw new Error('Invalid email/password')
         }
